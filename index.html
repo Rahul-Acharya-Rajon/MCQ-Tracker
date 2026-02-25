@@ -358,12 +358,35 @@
                         <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
                             <div class="flex justify-between">
                                 <div>
+                                    <p class="text-zinc-400 text-sm">মোট এমসিকিউ</p>
+                                    <p id="total-mcqs-display" class="text-5xl font-bold text-indigo-400 mt-1">0</p>
+                                </div>
+                                <div
+                                    class="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-3xl">
+                                    ❓
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                            <div class="flex justify-between">
+                                <div>
                                     <p class="text-zinc-400 text-sm">সম্পন্ন এমসিকিউ</p>
                                     <p id="completed-mcqs" class="text-5xl font-bold text-emerald-400 mt-1">0</p>
                                 </div>
                                 <div
                                     class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-3xl">
                                     ✅</div>
+                            </div>
+                        </div>
+                        <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                            <div class="flex justify-between">
+                                <div>
+                                    <p class="text-zinc-400 text-sm">বাকি এমসিকিউ</p>
+                                    <p id="remaining-mcqs" class="text-5xl font-bold text-emerald-400 mt-1">0</p>
+                                </div>
+                                <div
+                                    class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-3xl">
+                                    🥲</div>
                             </div>
                         </div>
                         <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
@@ -626,8 +649,14 @@
             const totalMCQ = tasks.reduce((a, t) => a + (t.totalMCQs || 0), 0)
             const completedMCQ = tasks.reduce((a, t) => a + (t.completedMCQs || 0), 0)
             const progress = totalMCQ ? Math.round((completedMCQ / totalMCQ) * 100) : 0
+            // নতুন করে যোগ করুন বা আপডেট করুন
+            document.getElementById("total-mcqs-display").textContent = totalMCQ;
+
+            // যদি আগের total-tasks আইডি রাখতে চান তাহলে এটাও রাখতে পারেন:
+            document.getElementById("total-tasks").textContent = tasks.length;
 
             const remainingMCQ = totalMCQ - completedMCQ
+            document.getElementById("remaining-mcqs").textContent = remainingMCQ;
             let remainingMinutes = 0
             tasks.forEach(task => {
                 const rem = (task.totalMCQs || 0) - (task.completedMCQs || 0)
@@ -641,7 +670,7 @@
 
             // Circle
             const circle = document.getElementById("progress-circle")
-            circle.style.setProperty("--progress", `${progress}%`)
+            circle.style.setProperty("--progress", `${ progress }% `)
             document.getElementById("progress-percent").textContent = progress
 
             // Daily
@@ -668,7 +697,7 @@
             if (remainingMinutes > 0 && dailyHours > 0) {
                 const hoursNeeded = remainingMinutes / 60
                 daysNeeded = Math.ceil(hoursNeeded / dailyHours)
-                recommend = `${dailyHours} ঘণ্টা`
+                recommend = `${ dailyHours } ঘণ্টা`
             } else if (dailyHours === 0 && remainingMinutes > 0) {
                 daysNeeded = "∞"
             }
@@ -687,11 +716,11 @@
 
             if (filteredTasks.length === 0) {
                 container.innerHTML = `
-                    <div class="bg-zinc-900 rounded-3xl p-12 text-center border border-dashed border-zinc-700">
+            <div div class="bg-zinc-900 rounded-3xl p-12 text-center border border-dashed border-zinc-700" >
                         <div class="text-6xl mb-4">📭</div>
                         <p class="text-zinc-400">কোনো টাস্ক নেই</p>
-                    </div>
-                `
+                    </div >
+            `
                 return
             }
 
@@ -702,9 +731,9 @@
                 const perc = task.totalMCQs ? Math.round((task.completedMCQs / task.totalMCQs) * 100) : 0
 
                 const card = document.createElement("div")
-                card.className = `task-card bg-zinc-900 border border-zinc-800 rounded-3xl p-6 flex gap-6 group`
+                card.className = `task - card bg - zinc - 900 border border - zinc - 800 rounded - 3xl p - 6 flex gap - 6 group`
                 card.innerHTML = `
-                    <div class="flex-1">
+            < div class="flex-1" >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="px-3 py-1 bg-zinc-800 text-xs font-medium rounded-2xl">${task.subject}</span>
@@ -739,8 +768,8 @@
                             <div class="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all" 
                                  style="width: ${perc}%"></div>
                         </div>
-                    </div>
-                `
+                    </div >
+            `
                 container.appendChild(card)
             })
 
@@ -749,7 +778,7 @@
 
         function updateSubjectFilter() {
             const select = document.getElementById("subject-filter")
-            select.innerHTML = `<option value="All">সব বিষয়</option>`
+            select.innerHTML = `<option option value = "All" > সব বিষয়</option > `
 
             const subjects = [...new Set(tasks.map(t => t.subject))].sort()
             subjects.forEach(sub => {
@@ -880,21 +909,21 @@
             }
             try {
                 const res = await fetch(`https://api.jsonbin.io/v3/b/${jsonBinId}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-Master-Key": masterKey
-                    },
-                    body: JSON.stringify({ tasks, dailyHours, deadline })
+        method: "PUT",
+            headers: {
+            "Content-Type": "application/json",
+                "X-Master-Key": masterKey
+        },
+        body: JSON.stringify({ tasks, dailyHours, deadline })
                 })
-                if (res.ok) {
-                    alert("✅ ক্লাউডে সেভ হয়েছে!")
-                } else {
-                    alert("❌ সেভ হয়নি। Bin ID / Key চেক করুন।")
-                }
+        if (res.ok) {
+            alert("✅ ক্লাউডে সেভ হয়েছে!")
+        } else {
+            alert("❌ সেভ হয়নি। Bin ID / Key চেক করুন।")
+        }
             } catch (e) {
-                alert("নেটওয়ার্ক সমস্যা!")
-            }
+            alert("নেটওয়ার্ক সমস্যা!")
+        }
         }
 
         var loadedTime = 0;
