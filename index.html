@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="bn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ ট্র্যাকার • পড়াশোনার সঙ্গী</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Hind Siliguri', system-ui, sans-serif;
+            background: #0f0f11;
+            color: #d4d4d8;
+        }
+
+        .task-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .task-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        .modal {
+            animation: modalPop 0.3s ease-out forwards;
+        }
+
+        @keyframes modalPop {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .sortable-ghost {
+            opacity: 0.4;
+        }
+
+        .progress-circle {
+            background: conic-gradient(#6366f1 0% var(--progress)%, #27272a var(--progress)% 100%);
+        }
+
+        #sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            z-index: 50;
+            width: 80vw;
+            max-width: 320px;
+            background: #18181b;
+            border-right: 1px solid #27272a;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #sidebar.open {
+            transform: translateX(0);
+        }
+
+        @media (min-width: 1024px) {
+            #sidebar {
+                position: static;
+                transform: none !important;
+                width: 18rem;
+                /* 72 * 0.25rem = 18rem */
+                border-right: 1px solid #27272a;
+            }
+        }
+
+        /* Overlay when sidebar open on mobile */
+        #sidebar.open~.overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        /* Main layout */
+        .main-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+        }
+
+        @media (min-width: 1024px) {
+            .main-layout {
+                flex-direction: row;
+            }
+        }
+
+        /* Progress circle responsive */
+        .progress-circle {
+            width: 9rem;
+            height: 9rem;
+            border-radius: 9999px;
+            background: conic-gradient(#6366f1 0% var(--progress), #27272a var(--progress) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 8px solid #0f0f11;
+            position: relative;
+        }
+
+        .progress-circle-inner {
+            width: 6.5rem;
+            height: 6.5rem;
+            border-radius: 9999px;
+            background: #0f0f11;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (min-width: 1024px) {
+            .progress-circle {
+                width: 14rem;
+                height: 14rem;
+            }
+
+            .progress-circle-inner {
+                width: 10rem;
+                height: 10rem;
+            }
+        }
+
+        /* Stats cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Content padding */
+        #content {
+            padding: 1rem;
+        }
+
+        @media (min-width: 1024px) {
+            #content {
+                padding: 2rem;
+            }
+        }
+
+        /* Modal improvements */
+        #task-modal .modal,
+        #jsonbin-modal .modal {
+            width: 92%;
+            max-width: 420px;
+            max-height: 90dvh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 1.25rem;
+        }
+
+        /* Top bar mobile friendly */
+        .top-bar {
+            padding: 0.75rem 1rem;
+            font-size: 1.25rem;
+        }
+
+        .top-bar button {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        @media (min-width: 1024px) {
+            .top-bar {
+                padding: 1.25rem 2rem;
+            }
+
+            .top-bar button {
+                padding: 0.625rem 1.5rem;
+                font-size: 0.95rem;
+            }
+        }
+
+        /* Task card mobile */
+        .task-card {
+            padding: 1rem;
+            border-radius: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .task-card {
+                padding: 1.25rem;
+            }
+        }
+
+        #sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        #sidebar.open {
+            transform: translateX(0);
+        }
+
+        @media (min-width: 1024px) {
+            #sidebar {
+                transform: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-zinc-950 text-zinc-200 min-h-screen">
+    <div class="lg:hidden bg-zinc-900 p-4 border-b border-zinc-800 flex justify-between items-center">
+        <h1 class="text-xl font-bold">📚 MCQ ট্র্যাকার</h1>
+        <button onclick="toggleSidebar()" class="text-2xl"><i class="fa-solid fa-bars"></i></button>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById("sidebar")?.classList.toggle("open");
+        }
+
+        // ২. সেকশন পরিবর্তন ফাংশন (মোবাইল মেনু অটো ক্লোজ করবে)
+        function showSection(section) {
+            document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("bg-zinc-800", "active"));
+
+            // সব সেকশন হাইড করা
+            ["progress", "tasks", "settings"].forEach(s => {
+                document.getElementById(s + "-section").classList.add("hidden");
+            });
+
+            // কাঙ্ক্ষিত সেকশন দেখানো
+            document.getElementById(section + "-section").classList.remove("hidden");
+            document.getElementById("page-title").textContent =
+                section === "progress" ? "প্রগ্রেশন" : section === "tasks" ? "টাস্কসমূহ" : "সেটিংস";
+
+            // if (window.innerWidth < 1024) toggleSidebar(); // মোবাইলে মেনু ক্লোজ
+            if (window.innerWidth < 1024) {
+                document.getElementById("sidebar")?.classList.add("-translate-x-full");
+                // অথবা যদি open class ব্যবহার করেন: .remove("open")
+            }
+            renderAll();
+        }
+    </script>
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="w-72 bg-zinc-900 border-r border-zinc-800 flex flex-col" id="sidebar">
+            <div class="p-6 border-b border-zinc-800">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
+                        📚</div>
+                    <div>
+                        <h1 class="text-3xl font-bold tracking-tight text-white">MCQ ট্র্যাকার</h1>
+                        <p class="text-xs text-zinc-500">পড়াশোনা সংগঠিত করুন</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 p-4">
+                <div onclick="showSection('progress')"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-zinc-800 cursor-pointer transition-colors mb-1 active">
+                    <i class="fa-solid fa-chart-line text-xl w-6"></i>
+                    <span class="font-medium">প্রগ্রেশন</span>
+                </div>
+                <div onclick="showSection('tasks')"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-zinc-800 cursor-pointer transition-colors mb-1">
+                    <i class="fa-solid fa-list-check text-xl w-6"></i>
+                    <span class="font-medium">টাস্কসমূহ</span>
+                </div>
+                <div onclick="showSection('settings')"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-zinc-800 cursor-pointer transition-colors">
+                    <i class="fa-solid fa-gear text-xl w-6"></i>
+                    <span class="font-medium">সেটিংস</span>
+                </div>
+            </nav>
+
+            <div class="p-4 border-t border-zinc-800">
+                <div class="bg-zinc-800 rounded-3xl p-4 text-xs">
+                    <div class="flex justify-between text-zinc-400 mb-1">
+                        <span>লোকাল স্টোরেজ</span>
+                        <span id="storage-status" class="text-emerald-400">সক্রিয়</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <!-- Top Bar -->
+            <div
+                class="bg-zinc-900 border-b border-zinc-800 px-8 py-5 flex items-center justify-between sticky top-0 z-10">
+                <h2 id="page-title" class="text-3xl font-semibold text-white">প্রগ্রেশন</h2>
+
+                <div class="flex items-center gap-4">
+                    <button onclick="showAddModal()"
+                        class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-6 py-2.5 rounded-3xl font-medium text-sm transition-all active:scale-95">
+                        <i class="fa-solid fa-plus"></i>
+                        নতুন টাস্ক
+                    </button>
+                    <div class="w-9 h-9 bg-zinc-800 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-zinc-700"
+                        onclick="showSettingsModal()">
+                        <i class="fa-solid fa-user text-lg"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Content -->
+            <div id="content" class="p-8">
+                <!-- Progress Section -->
+                <div id="progress-section">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <!-- Stats Cards -->
+                        <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                            <div class="flex justify-between">
+                                <div>
+                                    <p class="text-zinc-400 text-sm">মোট টাস্ক</p>
+                                    <p id="total-tasks" class="text-5xl font-bold text-white mt-1">0</p>
+                                </div>
+                                <div
+                                    class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-3xl">
+                                    📋</div>
+                            </div>
+                        </div>
+                        <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                            <div class="flex justify-between">
+                                <div>
+                                    <p class="text-zinc-400 text-sm">সম্পন্ন এমসিকিউ</p>
+                                    <p id="completed-mcqs" class="text-5xl font-bold text-emerald-400 mt-1">0</p>
+                                </div>
+                                <div
+                                    class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-3xl">
+                                    ✅</div>
+                            </div>
+                        </div>
+                        <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                            <div class="flex justify-between">
+                                <div>
+                                    <p class="text-zinc-400 text-sm">বাকি সময় (ঘণ্টা)</p>
+                                    <p id="remaining-hours" class="text-5xl font-bold text-amber-400 mt-1">0</p>
+                                </div>
+                                <div
+                                    class="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-3xl">
+                                    ⏳</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Progress -->
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                        <div class="lg:col-span-3 bg-zinc-900 rounded-3xl p-8 border border-zinc-800">
+                            <h3 class="text-xl font-semibold mb-6 flex items-center gap-3">
+                                <i class="fa-solid fa-chart-pie text-indigo-400"></i>
+                                সামগ্রিক প্রগ্রেশন
+                            </h3>
+                            <div class="flex items-center justify-center">
+                                <div id="progress-circle"
+                                    class="progress-circle w-64 h-64 rounded-full flex items-center justify-center border-8 border-zinc-900 relative">
+                                    <div
+                                        class="bg-zinc-900 w-48 h-48 rounded-full flex flex-col items-center justify-center">
+                                        <div id="progress-percent" class="text-7xl font-bold text-white">0</div>
+                                        <div class="text-zinc-400 text-sm -mt-2">%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-2 space-y-6">
+                            <!-- Daily Hours -->
+                            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                                <label class="block text-sm text-zinc-400 mb-2">গড়ে প্রতিদিন পড়ার ঘণ্টা</label>
+                                <div class="flex items-center gap-4">
+                                    <input id="daily-hours" type="range" min="0.5" max="12" step="0.5" value="4"
+                                        oninput="updateDailyHours(this.value)" class="flex-1 accent-indigo-600">
+                                    <div class="bg-zinc-800 w-20 text-center py-2 rounded-2xl font-mono font-bold text-lg"
+                                        id="hours-display">4.0</div>
+                                </div>
+                            </div>
+
+                            <!-- Deadline -->
+                            <div class="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                                <label class="block text-sm text-zinc-400 mb-2">ডেডলাইন</label>
+                                <input id="deadline-input" type="date" onchange="saveDeadline(this.value)"
+                                    class="bg-zinc-800 w-full px-5 py-3 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                                <div class="mt-4 flex justify-between text-sm">
+                                    <span class="text-zinc-400">বাকি দিন</span>
+                                    <span id="days-left" class="font-semibold text-emerald-400">—</span>
+                                </div>
+                            </div>
+
+                            <!-- Estimate -->
+                            <div
+                                class="bg-gradient-to-br from-indigo-900/30 to-zinc-900 border border-indigo-800 rounded-3xl p-6">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <p class="text-sm text-indigo-300">প্রয়োজনীয় দিন</p>
+                                        <p id="days-needed" class="text-5xl font-bold text-white">—</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-zinc-400">আপনি যদি প্রতিদিন</p>
+                                        <p id="daily-recommend" class="font-medium text-emerald-400">4 ঘণ্টা</p>
+                                        <p class="text-xs text-zinc-400">পড়েন</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasks Section -->
+                <div id="tasks-section" class="hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <select id="subject-filter" onchange="filterTasks()"
+                                class="bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-indigo-600">
+                                <option value="All">সব বিষয়</option>
+                            </select>
+                        </div>
+                        <div class="text-sm text-zinc-400">
+                            <span id="task-count">0</span> টি টাস্ক
+                        </div>
+                    </div>
+
+                    <div id="tasks-list" class="space-y-4 min-h-[400px]">
+                        <!-- Dynamic cards added by JS -->
+                    </div>
+                </div>
+
+                <!-- Settings Section -->
+                <div id="settings-section" class="hidden">
+                    <div class="max-w-2xl mx-auto bg-zinc-900 rounded-3xl p-8 border border-zinc-800">
+                        <h3 class="text-2xl font-semibold mb-8 flex items-center gap-3">
+                            <i class="fa-solid fa-cloud"></i>
+                            ক্লাউড ব্যাকআপ (JSONBin)
+                        </h3>
+
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm text-zinc-400 mb-2">JSONBin Bin ID</label>
+                                <input id="bin-id" type="text" placeholder="xxxxxxxxxxxxxxxxxxxxxx"
+                                    class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-4 focus:outline-none focus:border-indigo-600 font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-zinc-400 mb-2">Master Key (X-Master-Key)</label>
+                                <input id="master-key" type="password" placeholder="••••••••••••••••••••••••"
+                                    class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-6 py-4 focus:outline-none focus:border-indigo-600 font-mono">
+                            </div>
+
+                            <div class="flex gap-3">
+                                <button onclick="saveJsonBinSettings()"
+                                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 py-4 rounded-3xl font-medium">
+                                    সেটিংস সংরক্ষণ করুন
+                                </button>
+                                <button onclick="loadFromCloud()"
+                                    class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-4 rounded-3xl font-medium">
+                                    ক্লাউড থেকে লোড
+                                </button>
+                                <button onclick="saveToCloud()"
+                                    class="flex-1 bg-emerald-600 hover:bg-emerald-700 py-4 rounded-3xl font-medium">
+                                    ক্লাউডে সেভ করুন
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-12 pt-8 border-t border-zinc-800">
+                            <button onclick="importJSON()"
+                                class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl font-medium flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-upload"></i>
+                                JSON ফাইল ইম্পোর্ট করুন
+                            </button>
+                            <button onclick="exportJSON()"
+                                class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl font-medium flex items-center justify-center gap-2"
+                                style="margin-top: 10px;">
+                                <i class="fa-solid fa-download mr-2"></i> JSON এক্সপোর্ট
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Task Modal -->
+    <div id="task-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div class="modal bg-zinc-900 w-full max-w-lg mx-4 rounded-3xl p-8">
+            <h3 id="modal-title" class="text-2xl font-semibold mb-6">নতুন টাস্ক যোগ করুন</h3>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs text-zinc-400 mb-1">বইয়ের নাম</label>
+                    <input id="book-name" type="text"
+                        class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1">বিষয়</label>
+                        <input id="subject" type="text" placeholder="ফিজিক্স"
+                            class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1">চ্যাপ্টার নং</label>
+                        <input id="chapter" type="text" placeholder="৩"
+                            class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1">মোট এমসিকিউ</label>
+                        <input id="total-mcqs" type="number" value="50" min="1"
+                            class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1">সম্পন্ন</label>
+                        <input id="completed-mcqs-input" type="number" value="0" min="0"
+                            class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-zinc-400 mb-1">প্রতি MCQ সময় (মিনিট)</label>
+                        <input id="time-per" type="number" value="2" min="0.5" step="0.5"
+                            class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button onclick="closeModal()"
+                    class="flex-1 py-4 bg-zinc-800 hover:bg-zinc-700 rounded-3xl font-medium">বাতিল</button>
+                <button onclick="saveTask()" id="save-btn"
+                    class="flex-1 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-3xl font-medium">সংরক্ষণ করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSONBin First Time Modal -->
+    <div id="jsonbin-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
+        <div class="modal bg-zinc-900 w-full max-w-md mx-4 rounded-3xl p-8">
+            <div class="text-center mb-6">
+                <div class="text-5xl mb-4">☁️</div>
+                <h3 class="text-2xl font-semibold">স্বাগতম!</h3>
+                <p class="text-zinc-400 mt-2">ক্লাউড ব্যাকআপ চালু করতে চান?</p>
+            </div>
+
+            <div class="space-y-4">
+                <input id="modal-bin-id" type="text" placeholder="JSONBin Bin ID"
+                    class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 text-sm font-mono">
+                <input id="modal-master-key" type="password" placeholder="Master Key"
+                    class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-3 text-sm font-mono">
+            </div>
+
+            <div class="mt-8 flex gap-3">
+                <button onclick="skipJsonBin()"
+                    class="flex-1 py-4 text-zinc-400 hover:text-white transition-colors">স্কিপ করুন (লোকাল
+                    শুধু)</button>
+                <button onclick="saveFirstJsonBin()"
+                    class="flex-1 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-3xl font-medium">সেভ করুন</button>
+            </div>
+            <p class="text-[10px] text-center text-zinc-500 mt-6">jsonbin.io তে ফ্রি অ্যাকাউন্ট খুলে Bin তৈরি করুন</p>
+        </div>
+    </div>
+
+    <script>
+        // Tailwind script already loaded
+        let tasks = []
+        let dailyHours = 4
+        let deadline = ""
+        let jsonBinId = ""
+        let masterKey = ""
+        let currentEditingId = null
+        let currentFilter = "All"
+
+        const STORAGE_KEY = "mcqTrackerData"
+
+        function loadFromLocal() {
+            const saved = localStorage.getItem(STORAGE_KEY)
+            if (saved) {
+                const data = JSON.parse(saved)
+                tasks = data.tasks || []
+                dailyHours = data.dailyHours || 4
+                deadline = data.deadline || ""
+                jsonBinId = data.jsonBinId || ""
+                masterKey = data.masterKey || ""
+            }
+        }
+
+        function saveToLocal() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                tasks, dailyHours, deadline, jsonBinId, masterKey
+            }))
+        }
+
+        // Render functions
+        function renderProgress() {
+            const totalMCQ = tasks.reduce((a, t) => a + (t.totalMCQs || 0), 0)
+            const completedMCQ = tasks.reduce((a, t) => a + (t.completedMCQs || 0), 0)
+            const progress = totalMCQ ? Math.round((completedMCQ / totalMCQ) * 100) : 0
+
+            const remainingMCQ = totalMCQ - completedMCQ
+            let remainingMinutes = 0
+            tasks.forEach(task => {
+                const rem = (task.totalMCQs || 0) - (task.completedMCQs || 0)
+                remainingMinutes += rem * (task.timePerMCQ || 0)
+            })
+            const remainingHours = (remainingMinutes / 60).toFixed(1)
+
+            document.getElementById("total-tasks").textContent = tasks.length
+            document.getElementById("completed-mcqs").textContent = completedMCQ
+            document.getElementById("remaining-hours").textContent = remainingHours
+
+            // Circle
+            const circle = document.getElementById("progress-circle")
+            circle.style.setProperty("--progress", `${progress}%`)
+            document.getElementById("progress-percent").textContent = progress
+
+            // Daily
+            document.getElementById("daily-hours").value = dailyHours
+            document.getElementById("hours-display").textContent = dailyHours.toFixed(1)
+
+            // Deadline
+            const dlInput = document.getElementById("deadline-input")
+            dlInput.value = deadline
+
+            let daysLeft = "—"
+            if (deadline) {
+                const today = new Date()
+                const dlDate = new Date(deadline)
+                const diffTime = dlDate - today
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+                daysLeft = diffDays > 0 ? diffDays + " দিন" : "মেয়াদোত্তীর্ণ"
+            }
+            document.getElementById("days-left").textContent = daysLeft
+
+            // Estimate
+            let daysNeeded = "—"
+            let recommend = ""
+            if (remainingMinutes > 0 && dailyHours > 0) {
+                const hoursNeeded = remainingMinutes / 60
+                daysNeeded = Math.ceil(hoursNeeded / dailyHours)
+                recommend = `${dailyHours} ঘণ্টা`
+            } else if (dailyHours === 0 && remainingMinutes > 0) {
+                daysNeeded = "∞"
+            }
+            document.getElementById("days-needed").textContent = daysNeeded
+            document.getElementById("daily-recommend").textContent = recommend || "—"
+        }
+
+        function renderTasks() {
+            const container = document.getElementById("tasks-list")
+            container.innerHTML = ""
+
+            let filteredTasks = tasks
+            if (currentFilter !== "All") {
+                filteredTasks = tasks.filter(t => t.subject === currentFilter)
+            }
+
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-zinc-900 rounded-3xl p-12 text-center border border-dashed border-zinc-700">
+                        <div class="text-6xl mb-4">📭</div>
+                        <p class="text-zinc-400">কোনো টাস্ক নেই</p>
+                    </div>
+                `
+                return
+            }
+
+            filteredTasks.forEach(task => {
+                const remMCQ = task.totalMCQs - task.completedMCQs
+                const remMin = remMCQ * task.timePerMCQ
+                const remHour = (remMin / 60).toFixed(1)
+                const perc = task.totalMCQs ? Math.round((task.completedMCQs / task.totalMCQs) * 100) : 0
+
+                const card = document.createElement("div")
+                card.className = `task-card bg-zinc-900 border border-zinc-800 rounded-3xl p-6 flex gap-6 group`
+                card.innerHTML = `
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 bg-zinc-800 text-xs font-medium rounded-2xl">${task.subject}</span>
+                                <span class="text-xs text-zinc-500">${task.book} • চ্যাপ্টার ${task.chapter}</span>
+                            </div>
+                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                <button onclick="editTask('${task.id}')" class="w-8 h-8 flex items-center justify-center hover:bg-zinc-800 rounded-xl text-indigo-400">
+                                    <i class="fa-solid fa-pen text-sm"></i>
+                                </button>
+                                <button onclick="deleteTask('${task.id}')" class="w-8 h-8 flex items-center justify-center hover:bg-zinc-800 rounded-xl text-red-400">
+                                    <i class="fa-solid fa-trash text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 flex justify-between items-end">
+                            <div>
+                                <div class="text-3xl font-bold">${task.completedMCQs}<span class="text-xs text-zinc-400 font-normal">/${task.totalMCQs}</span></div>
+                                <div class="text-xs text-emerald-400">${perc}% সম্পন্ন</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-amber-400 text-sm">${remHour} ঘণ্টা বাকি</div>
+                                <div onclick="incrementCompleted('${task.id}')" 
+                                     class="cursor-pointer inline-flex items-center gap-1.5 mt-2 text-xs bg-emerald-900 hover:bg-emerald-800 px-4 py-1.5 rounded-2xl">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>১টি সমাধান</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="h-2 bg-zinc-800 rounded-full mt-6 overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all" 
+                                 style="width: ${perc}%"></div>
+                        </div>
+                    </div>
+                `
+                container.appendChild(card)
+            })
+
+            document.getElementById("task-count").textContent = filteredTasks.length
+        }
+
+        function updateSubjectFilter() {
+            const select = document.getElementById("subject-filter")
+            select.innerHTML = `<option value="All">সব বিষয়</option>`
+
+            const subjects = [...new Set(tasks.map(t => t.subject))].sort()
+            subjects.forEach(sub => {
+                const opt = document.createElement("option")
+                opt.value = sub
+                opt.textContent = sub
+                select.appendChild(opt)
+            })
+        }
+
+        function filterTasks() {
+            currentFilter = document.getElementById("subject-filter").value
+            renderTasks()
+        }
+
+        // Task CRUD
+        function showAddModal() {
+            currentEditingId = null
+            document.getElementById("modal-title").textContent = "নতুন টাস্ক যোগ করুন"
+            document.getElementById("book-name").value = ""
+            document.getElementById("subject").value = ""
+            document.getElementById("chapter").value = ""
+            document.getElementById("total-mcqs").value = "50"
+            document.getElementById("completed-mcqs-input").value = "0"
+            document.getElementById("time-per").value = "2"
+            document.getElementById("task-modal").classList.remove("hidden")
+            document.getElementById("task-modal").classList.add("flex")
+        }
+
+        function closeModal() {
+            const modal = document.getElementById("task-modal")
+            modal.classList.add("hidden")
+            modal.classList.remove("flex")
+        }
+
+        function saveTask() {
+            const book = document.getElementById("book-name").value.trim()
+            const subject = document.getElementById("subject").value.trim()
+            const chapter = document.getElementById("chapter").value.trim()
+            const total = parseInt(document.getElementById("total-mcqs").value) || 0
+            let completed = parseInt(document.getElementById("completed-mcqs-input").value) || 0
+            const timePer = parseFloat(document.getElementById("time-per").value) || 1
+
+            if (!book || !subject || !chapter || total <= 0) {
+                alert("সব তথ্য পূরণ করুন!")
+                return
+            }
+            if (completed > total) completed = total
+
+            if (currentEditingId) {
+                const task = tasks.find(t => t.id === currentEditingId)
+                if (task) {
+                    task.book = book
+                    task.subject = subject
+                    task.chapter = chapter
+                    task.totalMCQs = total
+                    task.completedMCQs = completed
+                    task.timePerMCQ = timePer
+                }
+            } else {
+                tasks.push({
+                    id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36),
+                    book,
+                    subject,
+                    chapter,
+                    totalMCQs: total,
+                    completedMCQs: completed,
+                    timePerMCQ: timePer
+                })
+            }
+
+            saveToLocal()
+            closeModal()
+            renderAll()
+        }
+
+        function editTask(id) {
+            const task = tasks.find(t => t.id === id)
+            if (!task) return
+
+            currentEditingId = id
+            document.getElementById("modal-title").textContent = "টাস্ক এডিট করুন"
+            document.getElementById("book-name").value = task.book
+            document.getElementById("subject").value = task.subject
+            document.getElementById("chapter").value = task.chapter
+            document.getElementById("total-mcqs").value = task.totalMCQs
+            document.getElementById("completed-mcqs-input").value = task.completedMCQs
+            document.getElementById("time-per").value = task.timePerMCQ
+
+            document.getElementById("task-modal").classList.remove("hidden")
+            document.getElementById("task-modal").classList.add("flex")
+        }
+
+        function deleteTask(id) {
+            if (!confirm("এই টাস্ক মুছে ফেলবেন?")) return
+            tasks = tasks.filter(t => t.id !== id)
+            saveToLocal()
+            renderAll()
+        }
+
+        function incrementCompleted(id) {
+            const task = tasks.find(t => t.id === id)
+            if (task && task.completedMCQs < task.totalMCQs) {
+                task.completedMCQs++
+                saveToLocal()
+                renderAll()
+            }
+        }
+
+        // Daily hours
+        function updateDailyHours(val) {
+            dailyHours = parseFloat(val)
+            saveToLocal()
+            renderProgress()
+        }
+
+        function saveDeadline(val) {
+            deadline = val
+            saveToLocal()
+            renderProgress()
+        }
+
+        // JSONBin
+        async function saveToCloud() {
+            if (!jsonBinId || !masterKey) {
+                alert("প্রথমে Bin ID ও Master Key সেট করুন!")
+                return
+            }
+            try {
+                const res = await fetch(`https://api.jsonbin.io/v3/b/${jsonBinId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Master-Key": masterKey
+                    },
+                    body: JSON.stringify({ tasks, dailyHours, deadline })
+                })
+                if (res.ok) {
+                    alert("✅ ক্লাউডে সেভ হয়েছে!")
+                } else {
+                    alert("❌ সেভ হয়নি। Bin ID / Key চেক করুন।")
+                }
+            } catch (e) {
+                alert("নেটওয়ার্ক সমস্যা!")
+            }
+        }
+
+        var loadedTime = 0;
+        async function loadFromCloud() {
+            if (!jsonBinId || !masterKey) {
+                alert("Bin ID ও Master Key দিন!")
+                return
+            }
+            try {
+                const res = await fetch(`https://api.jsonbin.io/v3/b/${jsonBinId}/latest`, {
+                    headers: { "X-Master-Key": masterKey }
+                })
+                const data = await res.json()
+                if (data.record) {
+                    tasks = data.record.tasks || []
+                    dailyHours = data.record.dailyHours || 4
+                    deadline = data.record.deadline || ""
+                    saveToLocal()
+                    renderAll()
+                    if (loadedTime != 0)
+                        alert("✅ ক্লাউড থেকে লোড হয়েছে!")
+                }
+            } catch (e) {
+                alert("লোড করা যায়নি।")
+            }
+            loadedTime += 1;
+        }
+
+        function saveJsonBinSettings() {
+            jsonBinId = document.getElementById("bin-id").value.trim()
+            masterKey = document.getElementById("master-key").value.trim()
+            saveToLocal()
+            alert("সেটিংস সংরক্ষিত!")
+        }
+
+        function showSettingsModal() {
+            document.getElementById("bin-id").value = jsonBinId
+            document.getElementById("master-key").value = masterKey
+            showSection("settings")
+        }
+
+        function saveFirstJsonBin() {
+            jsonBinId = document.getElementById("modal-bin-id").value.trim()
+            masterKey = document.getElementById("modal-master-key").value.trim()
+            if (jsonBinId) {
+                saveToLocal()
+            }
+            document.getElementById("jsonbin-modal").classList.add("hidden")
+            renderAll()
+        }
+
+        function skipJsonBin() {
+            document.getElementById("jsonbin-modal").classList.add("hidden")
+        }
+
+        // Export / Import
+        function exportJSON() {
+            const dataStr = JSON.stringify({ tasks, dailyHours, deadline, exportedAt: new Date().toISOString() }, null, 2)
+            const blob = new Blob([dataStr], { type: "application/json" })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url
+            a.download = `mcq-backup-${new Date().toISOString().slice(0, 10)}.json`
+            a.click()
+        }
+
+        function importJSON() {
+            const input = document.createElement("input")
+            input.type = "file"
+            input.accept = ".json"
+            input.onchange = e => {
+                const file = e.target.files[0]
+                const reader = new FileReader()
+                reader.onload = ev => {
+                    try {
+                        const imported = JSON.parse(ev.target.result)
+                        if (imported.tasks) {
+                            tasks = imported.tasks
+                            if (imported.dailyHours) dailyHours = imported.dailyHours
+                            if (imported.deadline) deadline = imported.deadline
+                            saveToLocal()
+                            renderAll()
+                            alert("✅ ইম্পোর্ট সফল!")
+                        }
+                    } catch (err) {
+                        alert("ফাইল ভুল!")
+                    }
+                }
+                reader.readAsText(file)
+            }
+            input.click()
+        }
+
+        function renderAll() {
+            updateSubjectFilter()
+            renderProgress()
+            renderTasks()
+        }
+
+        // Section switch
+        function showSection(section) {
+            // Remove active from all nav
+            document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active", "bg-zinc-800"))
+
+            // Find and activate
+            const navs = document.querySelectorAll(".nav-item")
+            if (section === "progress") navs[0].classList.add("active", "bg-zinc-800")
+            else if (section === "tasks") navs[1].classList.add("active", "bg-zinc-800")
+            else if (section === "settings") navs[2].classList.add("active", "bg-zinc-800")
+
+            document.getElementById("page-title").textContent =
+                section === "progress" ? "প্রগ্রেশন" :
+                    section === "tasks" ? "টাস্কসমূহ" : "সেটিংস"
+
+            document.getElementById("progress-section").classList.add("hidden")
+            document.getElementById("tasks-section").classList.add("hidden")
+            document.getElementById("settings-section").classList.add("hidden")
+
+            if (section === "progress") {
+                document.getElementById("progress-section").classList.remove("hidden")
+            } else if (section === "tasks") {
+                document.getElementById("tasks-section").classList.remove("hidden")
+                renderTasks()
+            } else if (section === "settings") {
+                document.getElementById("settings-section").classList.remove("hidden")
+            }
+        }
+
+        // ২. একটি মাত্র ক্লিনিং এবং পাওয়ারফুল init ফাংশন
+        async function init() {
+            loadFromLocal();
+            renderAll();
+
+            // অটো ক্লাউড ফেচ (সাইলেন্টলি)
+            if (jsonBinId && masterKey) {
+                try {
+                    const res = await fetch(`https://api.jsonbin.io/v3/b/${jsonBinId}/latest`, {
+                        headers: { "X-Master-Key": masterKey }
+                    });
+                    const data = await res.json();
+                    if (data.record) {
+                        tasks = data.record.tasks || [];
+                        dailyHours = data.record.dailyHours || 4;
+                        deadline = data.record.deadline || "";
+                        saveToLocal();
+                        renderAll();
+                        console.log("Cloud data synced automatically.");
+                    }
+                } catch (e) {
+                    console.log("Auto-fetch failed.");
+                }
+            } else {
+                // যদি Key না থাকে তবেই কেবল পপআপ দেখাবে
+                setTimeout(() => {
+                    document.getElementById("jsonbin-modal").classList.remove("hidden");
+                    document.getElementById("jsonbin-modal").classList.add("flex");
+                }, 800);
+            }
+
+            showSection("progress");
+        }
+
+        window.onload = init;
+
+        window.onload = async () => {
+            // আগে লোকাল থেকে কি (Key) গুলো লোড করে নিতে হবে
+            loadFromLocal();
+
+            // কি (Key) থাকলে ক্লাউড থেকে ডাটা আনবে
+            if (jsonBinId && masterKey) {
+                await loadFromCloud();
+            }
+
+            // সবশেষে ইউআই রেন্ডার করবে
+            renderAll();
+        };
+    </script>
+</body>
+
+</html>
