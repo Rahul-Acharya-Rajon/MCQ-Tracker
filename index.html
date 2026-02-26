@@ -5,8 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MCQ ট্র্যাকার • পড়াশোনার সঙ্গী</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"> -->
+    <link rel="stylesheet" href="output.css">
+    <link rel="stylesheet" href="fontawesome/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
 
@@ -54,7 +56,7 @@
         }
 
         .progress-circle {
-            background: conic-gradient(#6366f1 0% var(--progress)%, #27272a var(--progress)% 100%);
+            background: conic-gradient(#6366f1 0% var(--progress), #27272a var(--progress) 100%);
         }
 
         #sidebar {
@@ -624,6 +626,13 @@
         let currentEditingId = null
         let currentFilter = "All"
 
+        // আগের ডাটা মনে রাখার জন্য
+        let lastTaskData = {
+            book: "",
+            subject: "",
+            timePerMCQ: 0.5     // ডিফল্ট ২ মিনিট
+        };
+
         const STORAGE_KEY = "mcqTrackerData"
 
         function loadFromLocal() {
@@ -670,7 +679,7 @@
 
             // Circle
             const circle = document.getElementById("progress-circle")
-            circle.style.setProperty("--progress", `${ progress }% `)
+            circle.style.setProperty("--progress", `${progress}% `)
             document.getElementById("progress-percent").textContent = progress
 
             // Daily
@@ -697,7 +706,7 @@
             if (remainingMinutes > 0 && dailyHours > 0) {
                 const hoursNeeded = remainingMinutes / 60
                 daysNeeded = Math.ceil(hoursNeeded / dailyHours)
-                recommend = `${ dailyHours } ঘণ্টা`
+                recommend = `${dailyHours} ঘণ্টা`
             } else if (dailyHours === 0 && remainingMinutes > 0) {
                 daysNeeded = "∞"
             }
@@ -731,9 +740,9 @@
                 const perc = task.totalMCQs ? Math.round((task.completedMCQs / task.totalMCQs) * 100) : 0
 
                 const card = document.createElement("div")
-                card.className = `task - card bg - zinc - 900 border border - zinc - 800 rounded - 3xl p - 6 flex gap - 6 group`
+                card.className = `task-card bg-zinc-900 border border-zinc-800 rounded-3xl p-6 flex gap-6 group`
                 card.innerHTML = `
-            < div class="flex-1" >
+            <div class="flex-1">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="px-3 py-1 bg-zinc-800 text-xs font-medium rounded-2xl">${task.subject}</span>
@@ -806,6 +815,25 @@
             document.getElementById("time-per").value = "2"
             document.getElementById("task-modal").classList.remove("hidden")
             document.getElementById("task-modal").classList.add("flex")
+
+            // আগের ডাটা লোড করার চেষ্টা করুন
+            const saved = localStorage.getItem("lastTaskInput");
+            if (saved) {
+                lastTaskData = JSON.parse(saved);
+            }
+
+            // ফিল্ডগুলোতে আগের মান বসান (শুধু নতুন টাস্কের ক্ষেত্রে)
+            document.getElementById("book-name").value = lastTaskData.book || "";
+            document.getElementById("subject").value = lastTaskData.subject || "";
+            document.getElementById("time-per").value = lastTaskData.timePerMCQ || "2";
+
+            // চ্যাপ্টার ও MCQ সংখ্যা সাধারণত নতুন করে দিতে হয় → খালি রাখুন
+            document.getElementById("chapter").value = "";
+            document.getElementById("total-mcqs").value = "50";
+            document.getElementById("completed-mcqs-input").value = "0";
+
+            document.getElementById("task-modal").classList.remove("hidden");
+            document.getElementById("task-modal").classList.add("flex");
         }
 
         function closeModal() {
@@ -849,6 +877,16 @@
                     timePerMCQ: timePer
                 })
             }
+
+            // সফলভাবে সেভ হলে lastTaskData আপডেট করুন
+            lastTaskData = {
+                book: book,
+                subject: subject,
+                timePerMCQ: timePer
+            };
+
+            // localStorage-এ সেভ করে রাখুন (পেজ রিফ্রেশ হলেও মনে থাকবে)
+            localStorage.setItem("lastTaskInput", JSON.stringify(lastTaskData));
 
             saveToLocal()
             closeModal()
@@ -909,21 +947,21 @@
             }
             try {
                 const res = await fetch(`https://api.jsonbin.io/v3/b/${jsonBinId}`, {
-        method: "PUT",
-            headers: {
-            "Content-Type": "application/json",
-                "X-Master-Key": masterKey
-        },
-        body: JSON.stringify({ tasks, dailyHours, deadline })
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Master-Key": masterKey
+                    },
+                    body: JSON.stringify({ tasks, dailyHours, deadline })
                 })
-        if (res.ok) {
-            alert("✅ ক্লাউডে সেভ হয়েছে!")
-        } else {
-            alert("❌ সেভ হয়নি। Bin ID / Key চেক করুন।")
-        }
+                if (res.ok) {
+                    alert("✅ ক্লাউডে সেভ হয়েছে!")
+                } else {
+                    alert("❌ সেভ হয়নি। Bin ID / Key চেক করুন।")
+                }
             } catch (e) {
-            alert("নেটওয়ার্ক সমস্যা!")
-        }
+                alert("নেটওয়ার্ক সমস্যা!")
+            }
         }
 
         var loadedTime = 0;
